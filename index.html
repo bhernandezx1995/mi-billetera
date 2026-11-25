@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es-GT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Controla tus ingresos, gastos y presupuesto mensual en quetzales.">
+  <title>Mi Billetera</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#resumen"><span class="brand-icon" aria-hidden="true">Q</span> Mi Billetera</a>
+    <nav aria-label="Navegación principal">
+      <a href="#resumen"><span aria-hidden="true">◈</span> Resumen</a>
+      <a href="#historial"><span aria-hidden="true">≡</span> Movimientos</a>
+      <a href="#presupuesto"><span aria-hidden="true">◴</span> Presupuesto</a>
+    </nav>
+    <p class="sidebar-note">GTQ · Quetzal guatemalteco</p>
+  </aside>
+
+  <main id="resumen">
+    <header class="page-header">
+      <div><h1>Resumen financiero</h1><p>Consulta tus movimientos y planifica tus gastos del mes.</p></div>
+      <button class="primary" id="nuevo" type="button">＋ Nuevo movimiento</button>
+    </header>
+    <p id="estado" class="status" role="status" hidden></p>
+
+    <!-- El saldo es global. El selector controla el resto del panel. -->
+    <div class="periodo">
+      <label for="mes">Período</label>
+      <input id="mes" type="month" required aria-describedby="ayuda-mes">
+      <span id="ayuda-mes" class="sr-only">Si el navegador muestra un campo de texto, escribe el mes como AAAA-MM.</span>
+    </div>
+    <section class="metrics" aria-label="Indicadores financieros">
+      <article class="balance panel">
+        <span class="metric-icon" aria-hidden="true">Q</span>
+        <h2>Saldo disponible</h2>
+        <strong id="saldo">Q 0.00</strong>
+        <p>Todos los movimientos</p>
+      </article>
+      <article class="panel metric">
+        <span class="metric-icon income" aria-hidden="true">↙</span>
+        <h2>Ingresos del mes</h2>
+        <strong id="ingresos">Q 0.00</strong>
+      </article>
+      <article class="panel metric">
+        <span class="metric-icon expense" aria-hidden="true">↗</span>
+        <h2>Gastos del mes</h2>
+        <strong id="gastos">Q 0.00</strong>
+      </article>
+    </section>
+
+    <div class="insights">
+      <section class="panel chart-panel" aria-labelledby="titulo-grafica">
+        <h2 id="titulo-grafica">Ingresos y gastos</h2>
+        <p id="mes-visible"></p>
+        <div class="chart" id="grafica" role="img">
+          <div class="chart-grid" aria-hidden="true"></div>
+          <div class="chart-columns" aria-hidden="true">
+            <div><div class="bar bar-income" id="barra-ingresos"></div></div>
+            <div><div class="bar bar-expense" id="barra-gastos"></div></div>
+          </div>
+        </div>
+        <div class="legend"><span class="legend-income">Ingresos</span><span class="legend-expense">Gastos</span></div>
+      </section>
+      <section id="presupuesto" class="panel budget" aria-labelledby="titulo-presupuesto">
+        <h2 id="titulo-presupuesto">Presupuesto mensual</h2>
+        <p id="detalle-presupuesto"></p>
+        <progress id="progreso" max="100" value="0" aria-label="Porcentaje del presupuesto utilizado" hidden></progress>
+        <p id="restante"></p>
+        <form id="form-presupuesto">
+          <label for="limite">Límite de gastos (Q)</label>
+          <div class="budget-controls">
+            <input id="limite" type="number" min="0" max="999999999.99" step="0.01" placeholder="0.00" required>
+            <button class="secondary" type="submit">Guardar</button>
+          </div>
+          <small>Usa 0 para quitar el límite del período.</small>
+        </form>
+      </section>
+    </div>
+
+    <section id="historial" class="panel history" aria-labelledby="titulo-historial">
+      <div class="section-heading">
+        <div><h2 id="titulo-historial">Movimientos</h2><p id="conteo"></p></div>
+        <label class="filter">Filtrar por tipo
+          <select id="filtro"><option value="todos">Todos</option><option value="ingreso">Ingresos</option><option value="gasto">Gastos</option></select>
+        </label>
+      </div>
+      <p class="empty" id="sin-movimientos"></p>
+      <ul class="movements" id="movimientos"></ul>
+    </section>
+    <section class="panel categories" aria-labelledby="titulo-categorias">
+      <h2 id="titulo-categorias">Gastos por categoría</h2>
+      <p class="empty" id="sin-categorias">Los gastos del período aparecerán aquí.</p>
+      <ul id="categorias"></ul>
+    </section>
+    <section class="panel backup" aria-labelledby="titulo-respaldo">
+      <h2 id="titulo-respaldo">Copia de seguridad</h2>
+      <p>Tus datos se guardan en este navegador. Exporta una copia para conservarlos o trasladarlos a otro dispositivo.</p>
+      <div class="backup-actions">
+        <button id="exportar" class="secondary" type="button">Exportar copia</button>
+        <button id="importar" class="secondary" type="button">Importar copia</button>
+        <input id="archivo-respaldo" type="file" accept=".json,application/json" hidden>
+      </div>
+      <p id="estado-respaldo" class="status" role="status" hidden></p>
+    </section>
+  </main>
+
+  <dialog id="editor" aria-labelledby="titulo-editor">
+    <form id="form-movimiento">
+      <h2 id="titulo-editor"></h2>
+      <div class="form-grid">
+        <label>Tipo<select id="tipo"><option value="gasto">Gasto</option><option value="ingreso">Ingreso</option></select></label>
+        <label>Monto (Q)<input id="monto" type="number" min="0.01" max="999999999.99" step="0.01" required></label>
+        <label>Fecha<input id="fecha" type="date" min="0001-01-01" max="9999-12-31" required></label>
+        <label>Categoría<select id="categoria" required></select></label>
+        <label class="full">Descripción<input id="descripcion" maxlength="100" placeholder="Ej. Compra del supermercado" required></label>
+      </div>
+      <p class="status error form-error" role="alert" hidden>No se pudo guardar. Revisa el almacenamiento del navegador.</p>
+      <div class="actions"><button type="button" class="secondary" id="cancelar">Cancelar</button><button class="primary" type="submit">Guardar movimiento</button></div>
+    </form>
+  </dialog>
+  <dialog id="confirmacion" aria-labelledby="titulo-eliminar">
+    <h2 id="titulo-eliminar">Eliminar movimiento</h2>
+    <p id="detalle-eliminar"></p>
+    <p class="status error form-error" role="alert" hidden>No se pudo guardar el cambio. Revisa el almacenamiento del navegador.</p>
+    <div class="actions"><button type="button" class="secondary" id="conservar" autofocus>Cancelar</button><button id="eliminar" class="danger" type="button">Eliminar</button></div>
+  </dialog>
+  <dialog id="restauracion" aria-labelledby="titulo-restauracion">
+    <h2 id="titulo-restauracion">Importar copia de seguridad</h2>
+    <p id="detalle-restauracion"></p>
+    <p>La copia reemplazará todos los movimientos y presupuestos de este navegador. Si quieres conservar los datos actuales, cancela y expórtalos primero.</p>
+    <p id="error-restauracion" class="status error" role="alert" hidden>No se pudo guardar la copia. Revisa el almacenamiento del navegador.</p>
+    <div class="actions"><button id="cancelar-restauracion" class="secondary" type="button" autofocus>Cancelar</button><button id="restaurar" class="primary" type="button">Importar y reemplazar</button></div>
+  </dialog>
+</body>
+</html>
